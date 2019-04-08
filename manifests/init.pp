@@ -51,52 +51,10 @@ class shibboleth (
     ensure  => 'file',
     path    => $config_file,
     replace => false,
+    content => template($shibboleth_xml),
     require => [Class['apache::mod::shib'],File['shibboleth_conf_dir']],
   }
 
-# Using augeas is a performance hit, but it works. Fix later.
-  augeas{'sp_config_resources':
-    lens    => 'Xml.lns',
-    incl    => $config_file,
-    context => "/files${config_file}/SPConfig/ApplicationDefaults",
-    changes => [
-      "set Errors/#attribute/supportContact ${admin}",
-      "set Errors/#attribute/logoLocation ${logo_location}",
-      "set Errors/#attribute/styleSheet ${style_sheet}",
-    ],
-    notify  => Service['httpd','shibd'],
-  }
-
-  augeas{'sp_config_consistent_address':
-    lens    => 'Xml.lns',
-    incl    => $config_file,
-    context => "/files${config_file}/SPConfig/ApplicationDefaults",
-    changes => [
-      "set Sessions/#attribute/consistentAddress ${consistent_address}",
-    ],
-    notify  => Service['httpd','shibd'],
-  }
-
-  augeas{'sp_config_hostname':
-    lens    => 'Xml.lns',
-    incl    => $config_file,
-    context => "/files${config_file}/SPConfig/ApplicationDefaults",
-    changes => [
-      "set #attribute/entityID https://${hostname}/shibboleth",
-      "set Sessions/#attribute/handlerURL https://${hostname}/Shibboleth.sso",
-    ],
-    notify  => Service['httpd','shibd'],
-  }
-
-  augeas{'sp_config_handlerSSL':
-    lens    => 'Xml.lns',
-    incl    => $config_file,
-    context => "/files${config_file}/SPConfig/ApplicationDefaults",
-    changes => [
-      "set Sessions/#attribute/handlerSSL ${handlerSSL}",
-    ],
-    notify  => Service['httpd','shibd'],
-  }
 
   service{'shibd':
     ensure     => 'running',
